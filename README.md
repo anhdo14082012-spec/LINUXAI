@@ -106,26 +106,6 @@ Sửa `shell/config/apps.json`, thêm object:
 }
 ```
 
-## Build ISO trên GitHub (không cần WSL/Linux)
-
-1. Tạo repo mới trên GitHub, đẩy toàn bộ nội dung thư mục này lên nhánh `main`:
-   ```bash
-   cd grom-linux
-   git init -b main
-   git add .
-   git commit -m "GROM LINUX initial"
-   git remote add origin https://github.com/<user>/<repo>.git
-   git push -u origin main
-   ```
-2. Vào tab **Actions** → **Build GROM LINUX ISO** → **Run workflow**.
-   Chờ khoảng 30-60 phút, tải `grom-linux-iso` ở mục **Artifacts** (giữ 14 ngày).
-3. Muốn có bản phát hành lâu dài: đẩy tag, workflow tự tạo **Release** kèm ISO:
-   ```bash
-   git tag v0.1.0 && git push origin v0.1.0
-   ```
-   (ISO > 2GB sẽ được tự chia phần, hướng dẫn ghép nằm trong ghi chú Release.)
-
-## Build thành file .iso
 
 ```
 iso-build/
