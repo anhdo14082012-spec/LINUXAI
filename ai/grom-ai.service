@@ -1,0 +1,15 @@
+[Unit]
+Description=GROM LINUX Local AI Server (llama.cpp)
+After=multi-user.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/grom-ai-server.sh
+Restart=on-failure
+RestartSec=5
+# Giới hạn CPU để AI không chiếm hết máy khi chạy nền liên tục —
+# ưu tiên tiết kiệm năng lượng + UI mượt hơn là tốc độ AI tối đa.
+CPUQuota=80%
+
+[Install]
+WantedBy=multi-user.target

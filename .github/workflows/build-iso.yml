@@ -1,0 +1,107 @@
+name: Build GROM LINUX ISO
+
+# Chạy tay: tab Actions -> "Build GROM LINUX ISO" -> Run workflow
+# Tự động phát hành: đẩy tag dạng v0.1.0 -> build xong tạo GitHub Release kèm file ISO
+on:
+  workflow_dispatch:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write   # cần để tạo Release khi đẩy tag
+
+jobs:
+  build-iso:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    defaults:
+      run:
+        shell: bash
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Kiểm tra cú pháp (shell, python, json)
+        run: |
+          set -e
+          for f in $(find . -name '*.sh' -not -path './.git/*') session/grom-session-start; do
+            bash -n "$f" && echo "ok  $f"
+          done
+          python3 - << 'PY'
+          import ast, json, pathlib
+          for p in pathlib.Path("shell").rglob("*.py"):
+              ast.parse(p.read_text(encoding="utf-8"), filename=str(p))
+              print("ok ", p)
+          json.load(open("shell/config/apps.json", encoding="utf-8"))
+          print("ok  shell/config/apps.json")
+          PY
+
+      - name: Giải phóng dung lượng ổ đĩa của runner
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL
+          sudo docker image prune --all --force || true
+          df -h /
+
+      - name: Build ISO (trong container Debian bookworm)
+        run: |
+          mkdir -p iso-build/output
+          chmod +x iso-build/build-iso.sh
+          # Build trong Debian bookworm để live-build đúng phiên bản, không phụ thuộc runner Ubuntu.
+          # --privileged: debootstrap/live-build cần mount /proc, /sys, /dev trong chroot.
+          sudo docker run --rm --privileged \
+            -e DEBIAN_FRONTEND=noninteractive \
+            -v "$PWD":/work -w /work/iso-build \
+            debian:bookworm \
+            bash build-iso.sh 2>&1 | tee build.log
+
+      - name: Tạo checksum
+        run: |
+          cd iso-build/output
+          test -f grom-linux.iso
+          sudo chown -R "$USER" . || true
+          sha256sum grom-linux.iso | tee grom-linux.iso.sha256
+          ls -lh
+
+      - name: Upload ISO (Artifact)
+        uses: actions/upload-artifact@v7
+        with:
+          name: grom-linux-iso
+          path: |
+            iso-build/output/grom-linux.iso
+            iso-build/output/grom-linux.iso.sha256
+          compression-level: 0
+          retention-days: 14
+          if-no-files-found: error
+
+      - name: Upload log build (khi lỗi)
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: build-log
+          path: build.log
+          if-no-files-found: ignore
+
+      - name: Tạo GitHub Release (khi đẩy tag v*)
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd iso-build/output
+          SIZE=$(stat -c %s grom-linux.iso)
+          NOTES="ISO live GROM LINUX. Tài khoản demo: grom / grom (đổi mật khẩu nếu cài lên đĩa thật)."
+          # GitHub Release giới hạn 2GB/file -> tự chia nhỏ nếu ISO lớn hơn
+          if [ "$SIZE" -gt 1990000000 ]; then
+            split -b 1900M -d grom-linux.iso grom-linux.iso.part-
+            NOTES="$NOTES
+          ISO được chia thành nhiều phần, ghép lại bằng: cat grom-linux.iso.part-* > grom-linux.iso
+          (Windows CMD: copy /b grom-linux.iso.part-00+grom-linux.iso.part-01 grom-linux.iso)"
+            ASSETS=(grom-linux.iso.part-* grom-linux.iso.sha256)
+          else
+            ASSETS=(grom-linux.iso grom-linux.iso.sha256)
+          fi
+          gh release create "$GITHUB_REF_NAME" "${ASSETS[@]}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --title "GROM LINUX $GITHUB_REF_NAME" \
+            --notes "$NOTES"

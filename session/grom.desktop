@@ -1,0 +1,6 @@
+[Desktop Entry]
+Name=GROM LINUX
+Comment=GROM LINUX desktop session
+Exec=/usr/bin/grom-session-start
+Type=Application
+DesktopNames=GROM

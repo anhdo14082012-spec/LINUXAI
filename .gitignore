@@ -1,0 +1,25 @@
+# Kết quả build live-build
+iso-build/chroot/
+iso-build/binary/
+iso-build/cache/
+iso-build/config/
+iso-build/.build/
+iso-build/auto/
+iso-build/*.iso
+iso-build/*.contents
+iso-build/*.files
+iso-build/*.packages
+iso-build/*.zsync
+iso-build/build.log
+iso-build/output/*
+!iso-build/output/.gitkeep
+
+# AI: model + llama.cpp build (rất nặng, không đưa lên git)
+ai/models/*.gguf
+ai/llama.cpp/
+
+# Python / editor
+__pycache__/
+*.pyc
+.vscode/
+.idea/

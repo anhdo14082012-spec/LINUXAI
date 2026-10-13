@@ -1,0 +1,50 @@
+[
+  {
+    "name": "Terminal",
+    "cmd": "xterm",
+    "icon": "utilities-terminal",
+    "category": "system"
+  },
+  {
+    "name": "File Manager",
+    "cmd": "pcmanfm",
+    "icon": "folder",
+    "category": "system"
+  },
+  {
+    "name": "Cài đặt",
+    "cmd": "python3 {APPDIR}/settings_panel.py",
+    "icon": "preferences-system",
+    "category": "system"
+  },
+  {
+    "name": "GROM AI Assistant",
+    "cmd": "python3 {APPDIR}/ai_assistant.py",
+    "icon": "applications-science",
+    "category": "ai"
+  },
+  {
+    "name": "Nmap Scanner",
+    "cmd": "python3 {APPDIR}/nmap_gui.py",
+    "icon": "network-wired",
+    "category": "pentest"
+  },
+  {
+    "name": "Wireshark",
+    "cmd": "wireshark",
+    "icon": "network-workgroup",
+    "category": "pentest"
+  },
+  {
+    "name": "John the Ripper",
+    "cmd": "xterm -hold -e john",
+    "icon": "dialog-password",
+    "category": "pentest"
+  },
+  {
+    "name": "Aircrack-ng",
+    "cmd": "xterm -hold -e aircrack-ng",
+    "icon": "network-wireless",
+    "category": "pentest"
+  }
+]

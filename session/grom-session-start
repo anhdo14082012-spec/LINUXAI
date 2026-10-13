@@ -1,0 +1,31 @@
+#!/bin/sh
+# grom-session-start
+# Script khởi động session GROM LINUX, gọi bởi display manager khi
+# người dùng chọn session "GROM" ở màn hình login.
+#
+# Cài đặt: copy vào /usr/bin/grom-session-start và chmod +x
+# (packaging/install.sh đã làm việc này tự động).
+
+# 1. Đảm bảo power daemon đang chạy (nếu cài làm systemd service thì không cần dòng này,
+#    nhưng để dự phòng trường hợp chạy session thủ công không qua systemd).
+if ! pgrep -f grom-power-daemon.sh > /dev/null 2>&1; then
+    if command -v grom-power-daemon.sh > /dev/null 2>&1; then
+        grom-power-daemon.sh &
+    fi
+fi
+
+# 2. Chạy window manager nhẹ làm nền (openbox, không có panel riêng —
+#    GROM shell là panel/launcher duy nhất, giúp giảm tiến trình chạy nền).
+openbox-session &
+WM_PID=$!
+
+sleep 1
+
+# 3. Chạy GROM desktop shell (taskbar + sidebar + tab + launcher)
+cd /opt/grom-linux/shell || cd "$(dirname "$0")/../shell"
+python3 grom_shell.py &
+SHELL_PID=$!
+
+# 4. Giữ session sống cho tới khi window manager thoát (logout)
+wait $WM_PID
+kill $SHELL_PID 2>/dev/null
